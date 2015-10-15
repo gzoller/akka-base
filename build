@@ -1,0 +1,8 @@
+set -e
+BUILD_DIR=`mktemp -d /tmp/dockerception-akka.XXXXXX`
+docker build -t akka-builder .
+docker run akka-builder > $BUILD_DIR/akka.tar
+tar -C $BUILD_DIR -xvf $BUILD_DIR/akka.tar
+docker build -t gzoller/akka-base $BUILD_DIR
+rm -r $BUILD_DIR
+docker rmi -f akka-builder
