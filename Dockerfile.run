@@ -6,7 +6,7 @@ RUN opkg-install curl ca-certificates
 ENV JAVA_HOME /usr/jdk1.8.0_31
 
 # Add files.
-#ADD bin/start /usr/local/bin/
+ADD bin/start /usr/local/bin/portster.start
 ADD portster /usr/local/bin/
 ADD containerId.sh /usr/local/bin/
 
