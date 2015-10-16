@@ -1,8 +1,3 @@
-TE:  Strictly speaking we DON'T need this file here in the stream package!
-# It's here as a prototype.  We DO need it in the sender package so that senders
-# can cluster and communicate in Akka.
-#
-
 #!/bin/sh
 
 realpath () {
@@ -39,9 +34,7 @@ lib_dir="$(realpath "${app_home}/../lib")"
 ${{template_declares}}
 
 # Custom add here to set env vars and fire up portster to access externaly mapped pors inside Docker
-export DOCKER_CERT_PATH="/mnt/certs"
-export DOCKER_HOST="tcp://$HOST_IP:2376"
-/usr/local/bin/portster &
+/usr/local/bin/portster.start
 
 java -classpath $app_classpath $app_mainclass $@
 

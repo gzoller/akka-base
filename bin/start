@@ -1,7 +1,5 @@
-#!/bin/bash
+#!/bin/sh
 
 export DOCKER_CERT_PATH=/mnt/certs
 export DOCKER_HOST=tcp://$HOST_IP:2376
 portster &
-
-java $@
