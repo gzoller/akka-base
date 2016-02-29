@@ -12,6 +12,7 @@ WORKDIR /go/bin
 RUN \
   go get -d github.com/gzoller/portster && \
   cp /go/src/github.com/gzoller/portster/containerId.sh . && \
+  cp /go/src/github.com/gzoller/portster/run . && \
   go build -buildmode=exe github.com/gzoller/portster 
 
 # Export the WORKDIR as a tar stream
