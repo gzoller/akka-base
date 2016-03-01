@@ -1,29 +1,14 @@
 # Extended from errordeveloper/oracle-jre
-FROM progrium/busybox 
+FROM iron/scala
 
-RUN opkg-install curl ca-certificates
-
-ENV JAVA_HOME /usr/jdk1.8.0_31
+# Use the S6 init system -- personal preference I like it better than OpenRC
+ADD https://github.com/just-containers/s6-overlay/releases/download/v1.11.0.1/s6-overlay-amd64.tar.gz /tmp/
+RUN gunzip -c /tmp/s6-overlay-amd64.tar.gz | tar -xf - -C /
 
 # Add files.
-ADD bin/start /usr/local/bin/portster.start
 ADD portster /usr/local/bin/
 ADD containerId.sh /usr/local/bin/
+ADD run /etc/services.d/portster/run
+RUN echo "#!/bin/sh" > /etc/services.d/portster/finish
 
-RUN curl \
-  --silent \
-  --location \
-  --retry 3 \
-  --cacert /etc/ssl/certs/GeoTrust_Global_CA.crt \
-  --header "Cookie: oraclelicense=accept-securebackup-cookie;" \
-  "http://download.oracle.com/otn-pub/java/jdk/8u31-b13/server-jre-8u31-linux-x64.tar.gz" \
-    | gunzip \
-    | tar x -C /usr/ \
-    && ln -s $JAVA_HOME /usr/java \
-    && rm -rf $JAVA_HOME/man
-
-ENV PATH ${PATH}:${JAVA_HOME}/bin
-
-# You're going to have to override this.  BE SURE TO START portster!!
-#ENTRYPOINT ["java"]
-#CMD [ "-version" ]
+CMD [ "/init" ]
