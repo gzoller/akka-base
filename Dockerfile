@@ -4,7 +4,6 @@ FROM iron/go:dev
 
 # Add the runtime dockerfile into the context as Dockerfile
 COPY Dockerfile.run /go/bin/Dockerfile
-COPY bin/* /go/bin/bin/
 
 # Set the workdir to be /go/bin which is where the binaries are built
 WORKDIR /go/bin
