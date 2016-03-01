@@ -1,4 +1,4 @@
-FROM golang
+FROM iron/go:dev
 
 # Docker-in-Docker concept from here: https://github.com/jamiemccrindle/dockerception
 
