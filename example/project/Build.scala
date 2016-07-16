@@ -29,11 +29,11 @@ object Build extends Build {
 	// val slf4j_simple 	= "org.slf4j" 				% "slf4j-simple" 	% Slf4j
 
 	lazy val root = Project(id = "example", base = file("."))
-		.enablePlugins(AshScriptPlugin)
+		.enablePlugins(JavaAppPackaging)
 		.settings(dockerStuff:_*)
 		.settings(
-			dockerExposedPorts := Seq(2552),
-			dockerEntrypoint   := Seq("bin/example")
+			dockerExposedPorts := Seq(2551),
+			dockerEntrypoint   := Seq("/init","bin/example")
 			)
 		.settings(basicSettings: _*)
 		// .settings(libraryDependencies ++= Seq(typesafe_config, akka_actor, akka_remote, akka_slf4j, logback))
