@@ -1,29 +1,48 @@
 # akka-base
-This container is designed to be used as a base for building Docker-ized Akka nodes.  Inside the base is a Go program called portster, which exposes an internally-facing REST service used to easily determine the external port mappings for Docker.  This knowledge is essential to make Akka's dual-binding work and allow Docker-ized Akka apps to communicate w/o hard-wiring the Dockers together.
+This container is designed to be used as a base for building Docker-ized Akka nodes.  Inside the base is a Go program called portster, which exposes an internally-facing REST service used to easily determine the external port mappings for Docker.  This knowledge is essential to make Akka's dual-binding work and allow Docker-ized Akka apps to communicate w/o hard-wiring the Dockers together.  This is essential for clustering Docker-ized Akka nodes.
 
 The internal URL for the service is:
 
     GET localhost:1411/port/<port_num>;
 
-##building
+##Building
 Run the build script in the project directory to build the Docker image.
 
-##running
-See the go.sh script for an example.  **Don't** just run go.sh though!  This image really not intended to run by itself but be a base to build upon.
+## Two Ways to Run
+If you're running on a docker-machine the out-of-the-box Docker configuration uses TLS security.  Portster (and hence akka-base) supports TLS but you'll need to provide some passed-in parameters when running your image.  If you're running in a non-TLS environment, for example in AWS, you'll need different parameters, so let's look at each separately
 
-##setup
-There are a few things you'll need to do to make this work.  First, it is assumed you're going to build on top of this Docker--don't try to use it directly.  More to the point, you're going to override Endpoint, so you'll need to do some things.
+###1) TLS (docker-machine) 
+See the go.sh script for an example.  **Don't** just run go.sh though!  This image really not intended to run by itself but be a base to build upon.  Note the main line in the script:
 
-You'll need to set the following environment variables somewhere in your start script inside your Docker (e.g. ash-template file if using sbt-native-packager):
+```bash
+docker run -it -P -v ~/.docker/machine/certs:/mnt/certs -e "DOCKER_TLS_VERIFY=true" -e HOST_IP=$HOST_IP <your_image_here>
+```
+Let's pick it apart.
 
-* export DOCKER_HOST="tcp://$HOST_IP:2376"
-* export DOCKER_CERT_PATH="/mnt/certs"
+|Part  |Explanation   |
+|---|---|
+|docker run -it  |Self-explanatory|
+|-P   |Auto-assign any EXPOSE ports|
+|-v ~/.docker/machine/certs:/mnt/certs|Mount security certs to a point inside the Docker|
+|-e "DOCKER_TLS_VERIFY=true"|Tell image to use TLS security|
+|-e HOST_IP=$HOST_IP|Pass in the IP of the physical host|
+|<< your_image_here >>|Some image based on akka-base
 
-You'll also need to run the portster application:  `portster &`
+###2) Non-TLS (AWS)
+```bash
+docker run -it -P  -v /var/run/docker.sock:/var/run/docker.sock <your_image_here>
+```
+For non-TLS environments there's no security to worry about but we still need to allow portster access to Docker internals.  This is done via a UNIX socket, but we must mount this socket to a known point inside the Docker, which is what the -v parameter is doing here.  Otherwise the parameters are as above.
 
-###environment
-When running your Docker build on akka-base, you'll need to mount the volume containing your certs to /mnt/certs and set the environment variable `DOCKER_TLS_VERIFY=true`.
+##Example Scala App
+A trivial example project based on gzoller/akka-base using sbt-native-packager is provided in the example directory.  You can publish it locally with (from the example directory):
+```bash
+sbt docker:publishLocal
+```
 
-For now you'll also need to set HOST_IP to the IP of the host running this Docker.  Currently this must be passed in but future versions will be be smart enough to detect that if you don't pass it in, the system will presume you're running on AWS and use AWS's discovery service to get the host's IP.  Coming soon!
+##A word about init
+Normally in a Dockerfile you specify some ENTRYPOINT, typically a program or script to run when the image starts.  akka-base is intended to be a base layer and is designed to have more layers on top of it.
 
-A trivial example project using sbt-native-packager is provided in the example directory.  Note the inclusion of src/template/ash-template.  This is an override of the packager's default ash template except with the required changes to support portster.
+By default, Docker doesn't have a true POSIX init capability but akka-base includes S6-overlay, an init-like capability.  Read about it here: https://github.com/just-containers/s6-overlay
+
+portster is started by S6 *if*...  You start the init script on Docker image start.  See the example app (project/Build.scala) and note that dockerEntrypoint is set to Seq("/init",""bin/example").  You'll always need to start /init first, then whatever your program is, or portster won't launch when your Docker starts.  Of course your images can create S6 modules too if desired and they'll be automatically started by /init.
