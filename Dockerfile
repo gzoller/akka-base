@@ -1,4 +1,4 @@
-FROM iron/go:dev
+FROM golang
 
 # Docker-in-Docker concept from here: https://github.com/jamiemccrindle/dockerception
 
@@ -12,7 +12,7 @@ RUN \
   go get -d github.com/gzoller/portster && \
   cp /go/src/github.com/gzoller/portster/containerId.sh . && \
   cp /go/src/github.com/gzoller/portster/run . && \
-  go build -buildmode=exe github.com/gzoller/portster 
+  go build --ldflags '-extldflags "-static"' github.com/gzoller/portster 
 
 # Export the WORKDIR as a tar stream
 CMD tar -cf - .
